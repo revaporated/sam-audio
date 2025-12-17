@@ -63,9 +63,9 @@ class DACVAEEncoder(Encoder):
         self.quantizer = model.quantizer
 
     def forward(self, waveform: torch.Tensor) -> torch.Tensor:
-        with torch.no_grad():
+        with torch.no_grad(), torch.backends.cudnn.flags(enabled=False):
             z = self.encoder(self._pad(waveform))
-            mean, scale = self.quantizer.in_proj(z).chunk(2, dim=1)
+            mean, _ = self.quantizer.in_proj(z).chunk(2, dim=1)
             encoded_frames = mean
         return encoded_frames
 
@@ -84,8 +84,9 @@ class DACVAE(DACVAEEncoder, Codec):
         self.decoder = model.decoder
 
     def decode(self, encoded_frames: torch.Tensor) -> torch.Tensor:
-        emb = self.quantizer.out_proj(encoded_frames)
-        return self.decoder(emb)
+        with torch.backends.cudnn.flags(enabled=False):
+            emb = self.quantizer.out_proj(encoded_frames)
+            return self.decoder(emb)
 
     def feature_idx_to_wav_idx(self, feature_idx, sample_rate=None):
         if sample_rate is None:
