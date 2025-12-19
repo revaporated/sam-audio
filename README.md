@@ -54,7 +54,10 @@ batch = processor(
 ).to("cuda")
 
 with torch.inference_mode():
-   result = model.separate(batch)
+    # NOTE: `predict_spans` and `reranking_candidates` have a large impact on performance.
+    # Setting `predict_span=True` and `reranking_candidates=8` will give you better results at the cost of
+    # latency and memory. See the "Span Prediction" section below for more details
+   result = model.separate(batch, predict_spans=False, reranking_candidates=1)
 
 # Save separated audio
 sample_rate = processor.audio_sampling_rate
