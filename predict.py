@@ -17,7 +17,7 @@ class Predictor(BasePredictor):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         # Use sam-audio-base for smaller footprint, change to sam-audio-large for better quality
-        model_name = "facebook/sam-audio-base"
+        model_name = "facebook/sam-audio-large"
         
         self.model = SAMAudio.from_pretrained(model_name).to(self.device).eval()
         self.processor = SAMAudioProcessor.from_pretrained(model_name)
