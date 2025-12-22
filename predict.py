@@ -1,22 +1,76 @@
 # Prediction interface for Cog ⚙️
 # https://cog.run/python
 
+import torch
+import torchaudio
 from cog import BasePredictor, Input, Path
+from typing import Optional
+import tempfile
+import os
+
+from sam_audio import SAMAudio, SAMAudioProcessor
 
 
 class Predictor(BasePredictor):
     def setup(self) -> None:
         """Load the model into memory to make running multiple predictions efficient"""
-        # self.model = torch.load("./weights.pth")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+        # Use sam-audio-base for smaller footprint, change to sam-audio-large for better quality
+        model_name = "facebook/sam-audio-base"
+        
+        self.model = SAMAudio.from_pretrained(model_name).to(self.device).eval()
+        self.processor = SAMAudioProcessor.from_pretrained(model_name)
 
     def predict(
         self,
-        image: Path = Input(description="Grayscale input image"),
-        scale: float = Input(
-            description="Factor to scale image by", ge=0, le=10, default=1.5
+        audio: Path = Input(description="Audio file to separate sounds from"),
+        description: str = Input(
+            description="Text description of the sound to isolate (e.g., 'A man speaking', 'A dog barking')"
         ),
-    ) -> Path:
-        """Run a single prediction on the model"""
-        # processed_input = preprocess(image)
-        # output = self.model(processed_image, scale)
-        # return postprocess(output)
+        predict_spans: bool = Input(
+            description="Automatically predict time spans where the target sound occurs (better for non-ambient sounds)",
+            default=False,
+        ),
+        reranking_candidates: int = Input(
+            description="Number of candidates to generate and rerank (higher = better quality, slower)",
+            default=1,
+            ge=1,
+            le=8,
+        ),
+    ) -> list[Path]:
+        """Run audio source separation based on text description"""
+        
+        # Process input
+        batch = self.processor(
+            audios=[str(audio)],
+            descriptions=[description],
+        ).to(self.device)
+        
+        # Run separation
+        with torch.inference_mode():
+            result = self.model.separate(
+                batch,
+                predict_spans=predict_spans,
+                reranking_candidates=reranking_candidates,
+            )
+        
+        # Save outputs
+        output_dir = tempfile.mkdtemp()
+        sample_rate = self.processor.audio_sampling_rate
+        
+        target_path = Path(os.path.join(output_dir, "target.wav"))
+        residual_path = Path(os.path.join(output_dir, "residual.wav"))
+        
+        torchaudio.save(
+            str(target_path),
+            result.target[0].unsqueeze(0).cpu(),
+            sample_rate,
+        )
+        torchaudio.save(
+            str(residual_path),
+            result.residual[0].unsqueeze(0).cpu(),
+            sample_rate,
+        )
+        
+        return [target_path, residual_path]

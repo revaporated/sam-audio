@@ -2,24 +2,37 @@
 # Reference: https://cog.run/yaml
 
 build:
-  # set to true if your model requires a GPU
-  gpu: false
+  gpu: true
+  cuda: "12.4"
+  python_version: "3.11"
+  
+  system_packages:
+    - "git"
+    - "ffmpeg"
+    - "libsndfile1"
+  
+  python_packages:
+    - "torch==2.5.1"
+    - "torchaudio==2.5.1"
+    - "torchvision==0.20.1"
+    - "torchcodec==0.1.1"
+    - "torchdiffeq"
+    - "transformers>=4.54.0"
+    - "einops"
+    - "numpy"
+    - "pydub"
+    - "huggingface_hub"
+    - "audiobox_aesthetics"
+    - "dacvae @ git+https://github.com/facebookresearch/dacvae.git"
+    - "imagebind @ git+https://github.com/facebookresearch/ImageBind.git"
+    - "laion-clap @ git+https://github.com/lematt1991/CLAP.git"
+    - "perception-models @ git+https://github.com/facebookresearch/perception_models@unpin-deps"
+  
+  run:
+    # Install sam_audio from local directory
+    - "pip install ."
 
-  # a list of ubuntu apt packages to install
-  # system_packages:
-  #   - "libgl1-mesa-glx"
-  #   - "libglib2.0-0"
-
-  # python version in the form '3.11' or '3.11.4'
-  python_version: "3.13"
-
-  # path to a Python requirements.txt file
-  python_requirements: requirements.txt
-
-  # commands run after the environment is setup
-  # run:
-  #   - "echo env is ready!"
-  #   - "echo another command if needed"
-
-# predict.py defines how predictions are run on your model
 predict: "predict.py:Predictor"
+
+# Uncomment and set this to your Replicate model path
+# image: "r8.im/your-username/sam-audio"
