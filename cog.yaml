@@ -28,9 +28,9 @@ build:
     - "laion-clap @ git+https://github.com/lematt1991/CLAP.git"
     - "perception-models @ git+https://github.com/facebookresearch/perception_models@unpin-deps"
   
-  run:
-    # Install sam_audio from local directory
-    - "pip install ."
+  # run:
+  #   # Install sam_audio from local directory
+  #   - "pip install ."
 
 predict: "predict.py:Predictor"
 

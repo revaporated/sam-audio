@@ -1,6 +1,9 @@
 # Prediction interface for Cog ⚙️
 # https://cog.run/python
 
+import sys
+sys.path.insert(0, "/src")
+
 import torch
 import torchaudio
 from cog import BasePredictor, Input, Path
