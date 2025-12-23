@@ -29,12 +29,14 @@ build:
     - "perception-models @ git+https://github.com/facebookresearch/perception_models@unpin-deps"
   
   run:
-    # Download the gated model at build time using mounted secret (using base model for faster boot)
-    - command: python -c "from huggingface_hub import snapshot_download; token=open('/run/secrets/hf_token').read().strip(); snapshot_download('facebook/sam-audio-base', local_dir='/weights/sam-audio-base', token=token); print('Model downloaded successfully!')"
+    # Download the gated SAM-Audio model
+    - command: python -c "from huggingface_hub import snapshot_download; token=open('/run/secrets/hf_token').read().strip(); snapshot_download('facebook/sam-audio-base', local_dir='/weights/sam-audio-base', token=token); print('SAM-Audio model downloaded successfully!')"
       mounts:
         - type: secret
           id: hf_token
           target: /run/secrets/hf_token
+    # Pre-download ImageBind weights (4.47GB) - will be at /src/.checkpoints/ at runtime
+    - "mkdir -p /src/.checkpoints && wget -q --show-progress -O /src/.checkpoints/imagebind_huge.pth https://dl.fbaipublicfiles.com/imagebind/imagebind_huge.pth"
 
 predict: "predict.py:Predictor"
 image: "r8.im/revaporated/sam-audio"
