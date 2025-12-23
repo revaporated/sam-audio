@@ -19,8 +19,8 @@ class Predictor(BasePredictor):
         """Load the model into memory to make running multiple predictions efficient"""
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
-        # Model was downloaded at build time to this path
-        model_path = "/src/weights/sam-audio-large"
+        # Model was downloaded at build time to this path (outside /src to avoid COPY overwrite)
+        model_path = "/weights/sam-audio-large"
         
         self.model = SAMAudio.from_pretrained(model_path).to(self.device).eval()
         self.processor = SAMAudioProcessor.from_pretrained(model_path)
