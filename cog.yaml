@@ -3,7 +3,7 @@
 
 build:
   gpu: true
-  cuda: "12.1"
+  cuda: "12.8"
   python_version: "3.11"
   
   system_packages:
@@ -12,10 +12,10 @@ build:
     - "libsndfile1"
   
   python_packages:
-    - "torch==2.5.1"
-    - "torchaudio==2.5.1"
-    - "torchvision==0.20.1"
-    - "torchcodec==0.1.1"
+    - "torch==2.7.0"  
+    - "torchaudio==2.7.0"
+    - "torchvision==0.22.0"
+    - "torchcodec==0.3.0"
     - "torchdiffeq"
     - "transformers>=4.54.0"
     - "einops"
