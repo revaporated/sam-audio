@@ -30,7 +30,7 @@ build:
   
   run:
     # Download the gated model at build time using mounted secret
-    - command: python download_model.py
+    - command: python /src/download_model.py
       mounts:
         - type: secret
           id: hf_token
