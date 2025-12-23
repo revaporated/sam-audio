@@ -29,8 +29,8 @@ build:
     - "perception-models @ git+https://github.com/facebookresearch/perception_models@unpin-deps"
   
   run:
-    # Download the gated model at build time using mounted secret
-    - command: python -c "from huggingface_hub import snapshot_download; token=open('/run/secrets/hf_token').read().strip(); snapshot_download('facebook/sam-audio-large', local_dir='/weights/sam-audio-large', token=token); print('Model downloaded successfully!')"
+    # Download the gated model at build time using mounted secret (using base model for faster boot)
+    - command: python -c "from huggingface_hub import snapshot_download; token=open('/run/secrets/hf_token').read().strip(); snapshot_download('facebook/sam-audio-base', local_dir='/weights/sam-audio-base', token=token); print('Model downloaded successfully!')"
       mounts:
         - type: secret
           id: hf_token
