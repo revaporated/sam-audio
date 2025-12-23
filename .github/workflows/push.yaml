@@ -52,8 +52,14 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
+          # Write token to temp file for secret mounting
+          echo "$HF_TOKEN" > /tmp/hf_token
+          
           if [ -n "${{ inputs.model_name }}" ]; then
-            cog push r8.im/${{ inputs.model_name }}
+            cog push r8.im/${{ inputs.model_name }} --secret id=hf_token,src=/tmp/hf_token
           else
-            cog push
+            cog push --secret id=hf_token,src=/tmp/hf_token
           fi
+          
+          # Clean up
+          rm -f /tmp/hf_token
