@@ -19,11 +19,11 @@ class Predictor(BasePredictor):
         """Load the model into memory to make running multiple predictions efficient"""
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
-        # Use sam-audio-base for smaller footprint, change to sam-audio-large for better quality
-        model_name = "facebook/sam-audio-large"
+        # Model was downloaded at build time to this path
+        model_path = "/src/weights/sam-audio-large"
         
-        self.model = SAMAudio.from_pretrained(model_name).to(self.device).eval()
-        self.processor = SAMAudioProcessor.from_pretrained(model_name)
+        self.model = SAMAudio.from_pretrained(model_path).to(self.device).eval()
+        self.processor = SAMAudioProcessor.from_pretrained(model_path)
 
     def predict(
         self,

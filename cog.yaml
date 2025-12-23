@@ -28,11 +28,9 @@ build:
     - "laion-clap @ git+https://github.com/lematt1991/CLAP.git"
     - "perception-models @ git+https://github.com/facebookresearch/perception_models@unpin-deps"
   
-  # run:
-  #   # Install sam_audio from local directory
-  #   - "pip install ."
+  run:
+    # Download the gated model at build time (HF_TOKEN must be set)
+    - "python -c \"from huggingface_hub import snapshot_download; import os; snapshot_download('facebook/sam-audio-large', local_dir='/src/weights/sam-audio-large', token=os.environ.get('HF_TOKEN'))\""
 
 predict: "predict.py:Predictor"
-
-# Uncomment and set this to your Replicate model path
 image: "r8.im/revaporated/sam-audio"
