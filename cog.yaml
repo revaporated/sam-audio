@@ -30,11 +30,17 @@ build:
   
   run:
     # Download the gated model at build time using mounted secret
-    - command: python /src/download_model.py
+    - command: |
+        python -c "
+        from huggingface_hub import snapshot_download
+        token = open('/run/secrets/hf_token').read().strip()
+        snapshot_download('facebook/sam-audio-large', local_dir='/src/weights/sam-audio-large', token=token)
+        print('Model downloaded successfully!')
+        "
       mounts:
         - type: secret
           id: hf_token
           target: /run/secrets/hf_token
-
+          
 predict: "predict.py:Predictor"
 image: "r8.im/revaporated/sam-audio"
