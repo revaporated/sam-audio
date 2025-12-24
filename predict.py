@@ -4,73 +4,38 @@
 import sys
 sys.path.insert(0, "/src")
 
-print("DEBUG: Starting imports...", flush=True)
-
 import torch
-print("DEBUG: torch imported", flush=True)
-
 import torchaudio
-print("DEBUG: torchaudio imported", flush=True)
-
 from cog import BasePredictor, Input, Path
-print("DEBUG: cog imported", flush=True)
-
-from typing import Optional
 import tempfile
 import os
 
-print("DEBUG: About to import sam_audio...", flush=True)
 from sam_audio import SAMAudio, SAMAudioProcessor
-print("DEBUG: sam_audio imported", flush=True)
 
 
 class Predictor(BasePredictor):
     def setup(self) -> None:
         """Load the model into memory to make running multiple predictions efficient"""
-        print("DEBUG: setup() started", flush=True)
-        
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"DEBUG: device = {self.device}", flush=True)
         
-        # Check if model files exist
+        # Model was downloaded at build time to this path
         model_path = "/weights/sam-audio-base"
-        print(f"DEBUG: Checking model path: {model_path}", flush=True)
         
-        if os.path.exists(model_path):
-            print(f"DEBUG: Model path exists, contents: {os.listdir(model_path)}", flush=True)
-        else:
-            print(f"DEBUG: ERROR - Model path does not exist!", flush=True)
-        
-        # Check if ImageBind weights exist
-        imagebind_path = "/src/.checkpoints/imagebind_huge.pth"
-        if os.path.exists(imagebind_path):
-            print(f"DEBUG: ImageBind weights found at {imagebind_path}", flush=True)
-        else:
-            print(f"DEBUG: WARNING - ImageBind weights not found at {imagebind_path}", flush=True)
-        
-        print("DEBUG: Loading model...", flush=True)
-        self.model = SAMAudio.from_pretrained(model_path).to(self.device).eval()
-        print("DEBUG: Model loaded", flush=True)
-        
+        # Disable rankers and span predictor to speed up loading
+        # (they require additional large models like ImageBind and CLAP)
+        self.model = SAMAudio.from_pretrained(
+            model_path,
+            visual_ranker=None,
+            text_ranker=None,
+            span_predictor=None,
+        ).to(self.device).eval()
         self.processor = SAMAudioProcessor.from_pretrained(model_path)
-        print("DEBUG: Processor loaded", flush=True)
-        print("DEBUG: setup() complete!", flush=True)
 
     def predict(
         self,
         audio: Path = Input(description="Audio file to separate sounds from"),
         description: str = Input(
             description="Text description of the sound to isolate (e.g., 'A man speaking', 'A dog barking')"
-        ),
-        predict_spans: bool = Input(
-            description="Automatically predict time spans where the target sound occurs (better for non-ambient sounds)",
-            default=False,
-        ),
-        reranking_candidates: int = Input(
-            description="Number of candidates to generate and rerank (higher = better quality, slower)",
-            default=1,
-            ge=1,
-            le=8,
         ),
     ) -> list[Path]:
         """Run audio source separation based on text description"""
@@ -83,11 +48,7 @@ class Predictor(BasePredictor):
         
         # Run separation
         with torch.inference_mode():
-            result = self.model.separate(
-                batch,
-                predict_spans=predict_spans,
-                reranking_candidates=reranking_candidates,
-            )
+            result = self.model.separate(batch)
         
         # Save outputs
         output_dir = tempfile.mkdtemp()
